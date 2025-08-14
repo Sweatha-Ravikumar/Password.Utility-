@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #87ceeb; transition: background 0.5s; }
+        .night { background: #181c2b; color: #fff; }
+        .stars { position: fixed; width: 100vw; height: 100vh; top: 0; left: 0; pointer-events: none; z-index: 0; }
+        .star { position: absolute; background: white; border-radius: 50%; width: 2px; height: 2px; opacity: 0.8; }
+        .cloud { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 0; }
+        .cloud-shape { position: absolute; border-radius: 50%; opacity: 0.8; box-shadow: 0 0 40px 10px #fff, 40px 20px 60px 0px #fff, 60px 40px 80px 0px #e0f7fa, 20px 10px 30px 0px #fff, 80px 30px 100px 0px #e0f7fa; background: radial-gradient(circle at 60% 40%, #fff 70%, #e0f7fa 100%); animation: cloudMove 30s linear infinite; }
+        @keyframes cloudMove { 0% { transform: translateX(-10vw); } 100% { transform: translateX(110vw); } }
+        .container { max-width: 400px; margin: 60px auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: relative; z-index: 1; transition: background 0.5s, color 0.5s; }
+        .night .container { background: rgba(30, 34, 45, 0.95); color: #fff; }
+        h2 { text-align: center; }
+        input[type="text"] { width: 100%; padding: 10px; margin: 10px 0; border-radius: 4px; border: 1px solid #ccc; font-size: 1rem; background: #f9f9f9; transition: background 0.5s, color 0.5s; }
+        .night input[type="text"] { background: #222; color: #fff; border: 1px solid #444; }
+        button { width: 100%; padding: 10px; background: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 10px; font-size: 1rem; transition: background 0.5s; }
+        button:hover { background: #0056b3; }
+    .dark-toggle { background: #222; color: #fff; border: 1px solid #444; width: auto; margin-bottom: 20px; display: block; margin-left: auto; margin-right: auto; }
+        .goback-btn {
+            display: block;
+            margin: 10px auto 20px auto;
+            width: auto;
+            background: #222;
+            color: #fff;
+            border: 1px solid #444;
+            border-radius: 4px;
+            font-size: 1rem;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background 0.5s, color 0.5s;
+        }
+    .night .goback-btn {
+        background: #222;
+        color: #fff;
+        border: 1px solid #444;
+    }
+    .goback-btn:hover {
+        background: #0056b3;
+        color: #fff;
+    }
+    .night .goback-btn:hover {
+        background: #333;
+        color: #fff;
+    }
+        .message {
+            margin-top: 15px;
+            text-align: center;
+            color: #28a745;
+            font-size: 1.1rem;
+            padding: 8px;
+            border-radius: 4px;
+            background: #eaffea;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeInMsg 0.7s forwards;
+        }
+        @keyframes fadeInMsg {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .night .message { background: #222; color: #7fff7f; }
+        .input-details { font-size: 0.95rem; color: #555; margin-bottom: 8px; }
+        .night .input-details { color: #bbb; }
+    </style>
+    <script>
+        let shootingStarTimeout;
+        function toggleDarkMode() {
+            document.body.classList.toggle('night');
+            let btn = document.getElementById('dark-toggle-btn');
+            if(document.body.classList.contains('night')) {
+                localStorage.setItem('mode', 'night');
+                removeClouds();
+                createStars();
+                btn.innerHTML = '☀️ Light Mode';
+                startShootingStars();
+            } else {
+                localStorage.setItem('mode', 'light');
+                removeStars();
+                btn.innerHTML = '🌙 Dark Mode';
+                createClouds();
+                stopShootingStars();
+            }
+        }
+
+    // Stars should persist in dark mode; no need to re-create after output
+        function createStars() {
+            removeStars();
+            let starsDiv = document.createElement('div');
+            starsDiv.className = 'stars';
+            for(let i=0; i<100; i++) {
+                let star = document.createElement('div');
+                star.className = 'star';
+                star.style.top = Math.random()*100 + 'vh';
+                star.style.left = Math.random()*100 + 'vw';
+                star.style.width = star.style.height = (Math.random()*2+1) + 'px';
+                star.style.opacity = Math.random();
+                starsDiv.appendChild(star);
+            }
+            document.body.appendChild(starsDiv);
+        }
+        function removeStars() {
+            let stars = document.querySelector('.stars');
+            if(stars) stars.remove();
+        }
+        function createClouds() {
+            removeClouds();
+            let cloudDiv = document.createElement('div');
+            cloudDiv.className = 'cloud';
+            for(let i=0; i<6; i++) {
+                let cloud = document.createElement('div');
+                cloud.className = 'cloud-shape';
+                cloud.style.top = (Math.random()*60+10) + 'vh';
+                cloud.style.left = (-10 + Math.random()*10) + 'vw';
+                cloud.style.width = (Math.random()*100+80) + 'px';
+                cloud.style.height = (Math.random()*50+40) + 'px';
+                cloudDiv.appendChild(cloud);
+            }
+            document.body.appendChild(cloudDiv);
+        }
+        function removeClouds() {
+            let clouds = document.querySelector('.cloud');
+            if(clouds) clouds.remove();
+        }
+        function startShootingStars() {
+            function randomShootingStar() {
+                createShootingStar();
+                let nextTime = Math.random() * 15000 + 5000; // 5s to 20s
+                shootingStarTimeout = setTimeout(randomShootingStar, nextTime);
+            }
+            randomShootingStar();
+        }
+        function stopShootingStars() {
+            clearTimeout(shootingStarTimeout);
+        }
+        function createShootingStar() {
+            if(!document.body.classList.contains('night')) return;
+            let shootingStar = document.createElement('div');
+            shootingStar.className = 'shooting-star';
+            let startLeft = Math.random()*90+5; // 5vw to 95vw
+            shootingStar.style.left = startLeft + 'vw';
+            shootingStar.style.top = '0vh';
+            shootingStar.style.width = '2px';
+            shootingStar.style.height = '80px';
+            shootingStar.style.background = 'linear-gradient(180deg, white, rgba(255,255,255,0))';
+            shootingStar.style.position = 'fixed';
+            shootingStar.style.zIndex = '2';
+            shootingStar.style.opacity = '0.8';
+            shootingStar.style.borderRadius = '2px';
+            shootingStar.style.pointerEvents = 'none';
+            document.body.appendChild(shootingStar);
+            setTimeout(function() {
+                shootingStar.style.transition = 'top 1.2s linear, opacity 1.2s linear';
+                shootingStar.style.top = '80vh';
+                shootingStar.style.opacity = '0';
+            }, 10);
+            setTimeout(function() {
+                shootingStar.remove();
+            }, 1300);
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            let btn = document.getElementById('dark-toggle-btn');
+            let mode = localStorage.getItem('mode');
+            if(mode === 'night') {
+                document.body.classList.add('night');
+                btn.innerHTML = '☀️ Light Mode';
+                createStars();
+                startShootingStars();
+            } else {
+                document.body.classList.remove('night');
+                btn.innerHTML = '🌙 Dark Mode';
+                createClouds();
+            }
+        });
+        // Update localStorage on toggle
+        function toggleDarkMode() {
+            document.body.classList.toggle('night');
+            let btn = document.getElementById('dark-toggle-btn');
+            if(document.body.classList.contains('night')) {
+                localStorage.setItem('mode', 'night');
+                removeClouds();
+                createStars();
+                btn.innerHTML = '☀️ Light Mode';
+                startShootingStars();
+            } else {
+                localStorage.setItem('mode', 'light');
+                removeStars();
+                btn.innerHTML = '🌙 Dark Mode';
+                createClouds();
+                stopShootingStars();
+            }
+        }
+    </script>
+</head>
+<body>
+    <button class="dark-toggle" id="dark-toggle-btn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+    <button class="goback-btn" onclick="window.location.href='/'">⬅️ Go Back</button>
+    <div class="container">
+        <h2>Password Generator</h2>
+        <form method="POST">
+            <input type="text" name="keyword" placeholder="Enter keyword" required />
+            <button type="submit">Generate Password</button>
+        </form>
+        {% if generated_password %}
+            <div class="message valid">Generated Password: <b>{{ generated_password }}</b></div>
+        {% endif %}
+    </div>
+</body>
+</html>
