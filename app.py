@@ -66,5 +66,10 @@ def gen_page():
             generated_password = generate_password_with_keyword(keyword)
     return render_template('gen.html', generated_password=generated_password)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+from flask import Flask
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Hello, Render!"
+
