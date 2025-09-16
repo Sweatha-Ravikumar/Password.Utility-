@@ -65,7 +65,3 @@ def gen_page():
         if keyword:
             generated_password = generate_password_with_keyword(keyword)
     return render_template('gen.html', generated_password=generated_password)
-
-
-
-
